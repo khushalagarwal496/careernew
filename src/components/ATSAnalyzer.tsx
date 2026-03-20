@@ -122,8 +122,8 @@ export const ATSAnalyzer = () => {
 
     setIsAnalyzing(true);
     try {
-      console.log('[ATSAnalyzer] Calling local proxy for analysis...');
-      const response = await fetch('http://localhost:54321/functions/v1/ats-analyze', {
+      console.log('[ATSAnalyzer] Calling Vercel Serverless Function for analysis...');
+      const response = await fetch('/api/ats-analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

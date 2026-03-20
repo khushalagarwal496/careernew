@@ -35,7 +35,7 @@ const Opportunities = () => {
         try {
             console.log('[Opportunities] Fetching with query:', q || '(default fresher listings)');
 
-            const response = await fetch('http://localhost:54321/functions/v1/fetch-opportunities', {
+            const response = await fetch('/api/fetch-opportunities', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ query: q }),
@@ -60,7 +60,7 @@ const Opportunities = () => {
             console.error('[Opportunities] Error:', error);
             toast({
                 title: "Error fetching opportunities",
-                description: error.message || "Make sure the proxy server is running (node proxy-server.cjs).",
+                description: error.message || "Failed to fetch live data.",
                 variant: "destructive",
             });
         } finally {

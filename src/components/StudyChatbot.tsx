@@ -59,9 +59,9 @@ const StudyChatbot = () => {
         headers.Authorization = `Bearer ${session.access_token}`;
       }
 
-      // Call the AI chat function via local proxy
-      console.log('[StudyBot] Calling local proxy for chat...');
-      const response = await fetch('http://localhost:54321/functions/v1/study-chat', {
+      // Call the AI chat function via Vercel Serverless Function
+      console.log('[StudyBot] Calling Vercel Serverless Function for chat...');
+      const response = await fetch('/api/study-chat', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',

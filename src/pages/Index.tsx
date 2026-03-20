@@ -105,9 +105,9 @@ const Index = () => {
         return;
       }
 
-      // Call the AI analysis function with extracted text via local proxy
-      console.log('[Index] Calling local proxy for resume analysis...');
-      const response = await fetch('http://localhost:54321/functions/v1/analyze-resume', {
+      // Call the AI analysis function with extracted text via Vercel Serverless Function
+      console.log('[Index] Calling Vercel Serverless Function for resume analysis...');
+      const response = await fetch('/api/analyze-resume', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ resumeText })
