@@ -1,0 +1,106 @@
+Job ID: 019d0b14-6677-706a-ab79-81c359f3cfae
+Status: completed
+Credits Used: 0
+Expires: Mar 21, 2026, 05:21 PM
+
+Result:
+{
+  "hackathons": [
+    {
+      "Hackathon_Name": "GitLab AI Hackathon",
+      "Theme_Tags": [
+        "Databases",
+        "Machine Learning/AI",
+        "Productivity"
+      ],
+      "Prize_Pool": "$65,000 in prizes",
+      "Submission_Deadline": "Mar 25, 2026",
+      "Registration_Link": "https://gitlab.devpost.com/?ref_feature=challenge&ref_medium=discover"
+    },
+    {
+      "Hackathon_Name": "Authorized to Act: Auth0 for AI Agents",
+      "Theme_Tags": [
+        "Machine Learning/AI",
+        "Open Ended",
+        "Beginner Friendly"
+      ],
+      "Prize_Pool": "$10,000 in prizes",
+      "Submission_Deadline": "Apr 07, 2026",
+      "Registration_Link": "https://authorizedtoact.devpost.com/?ref_feature=challenge&ref_medium=discover"
+    },
+    {
+      "Hackathon_Name": "ZerveHack",
+      "Theme_Tags": [
+        "Machine Learning/AI"
+      ],
+      "Prize_Pool": "$10,000 in prizes",
+      "Submission_Deadline": "Apr 29, 2026",
+      "Registration_Link": "https://zervehack.devpost.com/?ref_feature=challenge&ref_medium=discover"
+    },
+    {
+      "Hackathon_Name": "Agents Assemble - The Healthcare AI Endgame",
+      "Theme_Tags": [
+        "Health",
+        "Machine Learning/AI",
+        "Beginner Friendly"
+      ],
+      "Prize_Pool": "$25,000 in prizes",
+      "Submission_Deadline": "May 11, 2026",
+      "Registration_Link": "https://agents-assemble.devpost.com/?ref_feature=challenge&ref_medium=discover"
+    },
+    {
+      "Hackathon_Name": "Hackonomics 2026",
+      "Theme_Tags": [
+        "Beginner Friendly",
+        "Education",
+        "Open Ended"
+      ],
+      "Prize_Pool": "5 non-cash prizes",
+      "Submission_Deadline": "Mar 30, 2026",
+      "Registration_Link": "https://hackonomics26.devpost.com/?ref_feature=challenge&ref_medium=discover"
+    },
+    {
+      "Hackathon_Name": "Student HackPad 2026",
+      "Theme_Tags": [
+        "Beginner Friendly",
+        "Low/No Code",
+        "Social Good"
+      ],
+      "Prize_Pool": "1 non-cash prizes",
+      "Submission_Deadline": "Mar 30, 2026",
+      "Registration_Link": "https://student-hackpad-2026.devpost.com/?ref_feature=challenge&ref_medium=discover"
+    },
+    {
+      "Hackathon_Name": "AI For Good",
+      "Theme_Tags": [
+        "Machine Learning/AI",
+        "Social Good"
+      ],
+      "Prize_Pool": "₹ 60,000 in prizes",
+      "Submission_Deadline": "Mar 23, 2026",
+      "Registration_Link": "https://ai-for-good-28231.devpost.com/?ref_feature=challenge&ref_medium=discover"
+    },
+    {
+      "Hackathon_Name": "CircuitBreak 2025",
+      "Theme_Tags": [
+        "IoT",
+        "Open Ended",
+        "Web"
+      ],
+      "Prize_Pool": "1 non-cash prizes",
+      "Submission_Deadline": "Mar 31, 2026",
+      "Registration_Link": "https://circuitbreak-2025.devpost.com/?ref_feature=challenge&ref_medium=discover"
+    },
+    {
+      "Hackathon_Name": "GenAI Dev Hackathon",
+      "Theme_Tags": [
+        "Beginner Friendly",
+        "Low/No Code",
+        "Social Good"
+      ],
+      "Prize_Pool": "$2,000 in prizes",
+      "Submission_Deadline": "Mar 24, 2026",
+      "Registration_Link": "https://genaidevhackathon.devpost.com/?ref_feature=challenge&ref_medium=discover"
+    }
+  ]
+}
