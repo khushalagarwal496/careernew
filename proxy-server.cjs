@@ -3,6 +3,7 @@ const http = require('http');
 const https = require('https');
 const fs = require('fs');
 const path = require('path');
+const { createClient } = require('@supabase/supabase-js');
 
 // ── Config ──────────────────────────────────────────────────────────────────
 const PORT = 54321;
@@ -27,6 +28,14 @@ const env = loadEnv();
 const RAPIDAPI_KEY = env.RAPIDAPI_KEY || '';
 const FIRECRAWL_API_KEY = env.FIRECRAWL_API_KEY || '';
 const GEMINI_API_KEY = env.GEMINI_API_KEY || '';
+const SUPABASE_URL = env.VITE_SUPABASE_URL || '';
+const SUPABASE_SERVICE_ROLE_KEY = env.SUPABASE_SERVICE_ROLE_KEY || '';
+
+const supabase = (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) 
+    ? createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY) 
+    : null;
+
+if (!supabase) console.warn('[Supabase] Client not initialized. MISSING SUPABASE_SERVICE_ROLE_KEY in .env');
 
 const corsHeaders = {
     "Access-Control-Allow-Origin": "*",
@@ -100,8 +109,7 @@ async function callGemini(systemPrompt, userMessage, history = []) {
         generationConfig: { temperature: 0.7, maxOutputTokens: 2048 }
     };
 
-    // Use v1beta for gemini-1.5-flash to ensure system_instruction support
-    const apiPath = `/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${GEMINI_API_KEY}`;
+    const apiPath = `/v1beta/models/gemini-flash-latest:generateContent?key=${GEMINI_API_KEY}`;
     
     const response = await httpsPost('generativelanguage.googleapis.com', apiPath, { 'Content-Type': 'application/json' }, body);
     
@@ -137,12 +145,104 @@ function normaliseType(raw) {
 }
 
 function isFresherRelevant(title, description) {
-    const keys = ['intern', 'fresher', 'graduate', 'entry level', 'junior', 'trainee'];
+    const keys = ['intern', 'fresher', 'graduate', 'entry level', 'junior', 'trainee', 'associate', 'software engineer', 'developer', 'analyst'];
     const text = `${title} ${description}`.toLowerCase();
     return keys.some(k => text.includes(k));
 }
 
 // ── Data Sources ─────────────────────────────────────────────────────────────
+async function fetchDevfolio() {
+    if (!FIRECRAWL_API_KEY) return [];
+    try {
+        console.log('[Devfolio] Scraping...');
+        const data = await httpsPost('api.firecrawl.dev', '/v1/scrape', { 'Authorization': `Bearer ${FIRECRAWL_API_KEY}`, 'Content-Type': 'application/json' }, { 
+            url: 'https://devfolio.co/hackathons', 
+            formats: ['extract'], 
+            extract: { prompt: 'Extract a list of upcoming hackathons with title, organizer, and link. Focus on active ones.' } 
+        });
+        return (Object.values(data.data?.extract || {}).find(v => Array.isArray(v)) || []).map((v, i) => ({ 
+            id: `devfolio-${i}-${Date.now()}`, 
+            title: v.title || 'Hackathon', 
+            companyOrOrganizer: v.organizer || 'Devfolio', 
+            type: 'HACKATHON', 
+            location: 'India/Remote', 
+            applyLink: v.link || 'https://devfolio.co', 
+            analysis: 'Global hackathons on Devfolio.', 
+            matchScore: 88, 
+            platform: 'Devfolio' 
+        }));
+    } catch (e) { console.error(`[Devfolio] Error: ${e.message}`); return []; }
+}
+
+async function fetchUnstop() {
+    if (!FIRECRAWL_API_KEY) return [];
+    try {
+        console.log('[Unstop] Scraping...');
+        const data = await httpsPost('api.firecrawl.dev', '/v1/scrape', { 'Authorization': `Bearer ${FIRECRAWL_API_KEY}`, 'Content-Type': 'application/json' }, { 
+            url: 'https://unstop.com', 
+            formats: ['extract'], 
+            extract: { prompt: 'Extract active hackathons and competitions with title, organization, and link.' } 
+        });
+        return (Object.values(data.data?.extract || {}).find(v => Array.isArray(v)) || []).map((v, i) => ({ 
+            id: `unstop-${i}-${Date.now()}`, 
+            title: v.title || 'Competition', 
+            companyOrOrganizer: v.organization || 'Unstop', 
+            type: 'HACKATHON', 
+            location: 'India', 
+            applyLink: v.link || 'https://unstop.com', 
+            analysis: 'Top student competitions and hackathons.', 
+            matchScore: 85, 
+            platform: 'Unstop' 
+        }));
+    } catch (e) { console.error(`[Unstop] Error: ${e.message}`); return []; }
+}
+
+async function fetchHackerEarth() {
+    if (!FIRECRAWL_API_KEY) return [];
+    try {
+        console.log('[HackerEarth] Scraping...');
+        const data = await httpsPost('api.firecrawl.dev', '/v1/scrape', { 'Authorization': `Bearer ${FIRECRAWL_API_KEY}`, 'Content-Type': 'application/json' }, { 
+            url: 'https://www.hackerearth.com/challenges/', 
+            formats: ['extract'], 
+            extract: { prompt: 'Extract active challenges with title, company, and link.' } 
+        });
+        return (Object.values(data.data?.extract || {}).find(v => Array.isArray(v)) || []).map((v, i) => ({ 
+            id: `he-${i}-${Date.now()}`, 
+            title: v.title || 'Challenge', 
+            companyOrOrganizer: v.company || 'HackerEarth', 
+            type: 'HACKATHON', 
+            location: 'Remote', 
+            applyLink: v.link || 'https://hackerearth.com', 
+            analysis: 'Competitive programming and hiring hackathons.', 
+            matchScore: 82, 
+            platform: 'HackerEarth' 
+        }));
+    } catch (e) { console.error(`[HackerEarth] Error: ${e.message}`); return []; }
+}
+
+async function fetchGovChallenges() {
+    if (!FIRECRAWL_API_KEY) return [];
+    try {
+        console.log('[MyGov] Scraping...');
+        const data = await httpsPost('api.firecrawl.dev', '/v1/scrape', { 'Authorization': `Bearer ${FIRECRAWL_API_KEY}`, 'Content-Type': 'application/json' }, { 
+            url: 'https://innovateindia.mygov.in/challenges/', 
+            formats: ['extract'], 
+            extract: { prompt: 'Extract active government challenges and hackathons with title and link.' } 
+        });
+        return (Object.values(data.data?.extract || {}).find(v => Array.isArray(v)) || []).map((v, i) => ({ 
+            id: `gov-${i}-${Date.now()}`, 
+            title: v.title || 'Gov Challenge', 
+            companyOrOrganizer: 'Gov of India', 
+            type: 'HACKATHON', 
+            location: 'India', 
+            applyLink: v.link || 'https://mygov.in', 
+            analysis: 'Official government innovation challenges.', 
+            matchScore: 90, 
+            platform: 'MyGov' 
+        }));
+    } catch (e) { console.error(`[MyGov] Error: ${e.message}`); return []; }
+}
+
 async function fetchCommudle() {
     if (!FIRECRAWL_API_KEY) return [];
     try {
@@ -161,26 +261,105 @@ async function fetchTownscript() {
 
 async function fetchActiveJobsDB(query) {
     try {
-        const data = await httpsGet('active-jobs-db.p.rapidapi.com', `/active-ats-1h?offset=0&title_filter=${encodeURIComponent(query || 'intern')}&limit=20`, { 'X-RapidAPI-Key': RAPIDAPI_KEY, 'X-RapidAPI-Host': 'active-jobs-db.p.rapidapi.com' });
-        return (Array.isArray(data) ? data : (data.data || data.jobs || [])).map((j, i) => ({ id: `ajdb-${i}-${Date.now()}`, title: j.title || '', companyOrOrganizer: j.company || 'Company', type: normaliseType(j.employment_type || ''), location: normaliseLocation(j.location || ''), applyLink: j.url || '#', analysis: (j.description || '').slice(0, 200) + '...', matchScore: 75, platform: 'ActiveJobs' }));
-    } catch (_) { return []; }
+        const fullQuery = (query || 'software engineer');
+        const path = `/active-ats-1h?offset=0&title_filter=${encodeURIComponent(fullQuery)}&limit=20`;
+        console.log(`[AJDB] Calling: ${path}`);
+        const data = await httpsGet('active-jobs-db.p.rapidapi.com', path, { 'X-RapidAPI-Key': RAPIDAPI_KEY, 'X-RapidAPI-Host': 'active-jobs-db.p.rapidapi.com' });
+        
+        const jobs = Array.isArray(data) ? data : (data.data || data.jobs || []);
+        console.log(`[AJDB] Success: Found ${jobs.length} items.`);
+
+        return jobs.map((j, i) => ({ id: `ajdb-${i}-${Date.now()}`, title: j.title || '', companyOrOrganizer: j.company || 'Company', type: normaliseType(j.employment_type || ''), location: normaliseLocation(j.location || ''), applyLink: j.url || '#', analysis: (j.description || '').slice(0, 200) + '...', matchScore: 75, platform: 'ActiveJobs' }));
+    } catch (e) { console.error(`[AJDB] FATAL: ${e.message}`); return []; }
 }
 
-async function fetchJSearch(query) {
+async function fetchJSearch(query, category = 'jobs') {
     try {
-        const data = await httpsGet('jsearch.p.rapidapi.com', `/search?query=${encodeURIComponent(query || 'intern')} in India&num_pages=1`, { 'X-RapidAPI-Key': RAPIDAPI_KEY, 'X-RapidAPI-Host': 'jsearch.p.rapidapi.com' });
-        return (data.data || []).map((j, i) => ({ id: `jsearch-${i}-${Date.now()}`, title: j.job_title || '', companyOrOrganizer: j.employer_name || 'Company', type: normaliseType(j.job_employment_type || ''), location: normaliseLocation(j.job_city || 'India'), applyLink: j.job_apply_link || '#', analysis: (j.job_description || '').slice(0, 200) + '...', matchScore: 72, platform: 'JSearch' }));
-    } catch (_) { return []; }
+        const fullQuery = `${query || ''} ${category} in India`;
+        const path = `/search?query=${encodeURIComponent(fullQuery.trim())}&num_pages=1`;
+        console.log(`[JSearch] Calling: ${path} for ${category}`);
+        const data = await httpsGet('jsearch.p.rapidapi.com', path, { 'X-RapidAPI-Key': RAPIDAPI_KEY, 'X-RapidAPI-Host': 'jsearch.p.rapidapi.com' });
+        
+        if (!data || !data.data || data.data.length === 0) {
+            console.warn(`[JSearch] Warning: No ${category} found. Status: ${data?.status || 'Unknown'}`);
+        } else {
+            console.log(`[JSearch] Success: Found ${data.data.length} ${category}.`);
+        }
+
+        return (data.data || []).map((j, i) => ({ id: `js-${category}-${i}-${Date.now()}`, title: j.job_title || '', companyOrOrganizer: j.employer_name || 'Company', type: category.toUpperCase() === 'INTERNSHIPS' ? 'INTERNSHIP' : normaliseType(j.job_employment_type || ''), location: normaliseLocation(j.job_city || 'India'), applyLink: j.job_apply_link || '#', analysis: (j.job_description || '').slice(0, 200) + '...', matchScore: 72, platform: 'JSearch' }));
+    } catch (e) { console.error(`[JSearch] FATAL: ${e.message}`); return []; }
 }
 
+// Deduplication helper to prevent redundant items
 function deduplicate(list) {
     const seen = new Set();
-    return list.filter(item => { if (!item.applyLink || item.applyLink==='#' || seen.has(item.applyLink)) return false; seen.add(item.applyLink); return true; });
+    return list.filter(item => {
+        if (!item.applyLink || item.applyLink === '#' || seen.has(item.applyLink)) return false;
+        seen.add(item.applyLink);
+        return true;
+    });
 }
 
+const lastLogs = [];
+const originalLog = console.log;
+const originalErr = console.error;
+const originalWarn = console.warn;
+console.log = (...args) => { lastLogs.push(`[LOG] ${args.join(' ')}`); if (lastLogs.length > 50) lastLogs.shift(); originalLog(...args); };
+console.error = (...args) => { lastLogs.push(`[ERR] ${args.join(' ')}`); if (lastLogs.length > 50) lastLogs.shift(); originalErr(...args); };
+console.warn = (...args) => { lastLogs.push(`[WARN] ${args.join(' ')}`); if (lastLogs.length > 50) lastLogs.shift(); originalWarn(...args); };
+
 // ── HTTP Server ──────────────────────────────────────────────────────────────
-const server = http.createServer((req, res) => {
+const server = http.createServer(async (req, res) => {
     if (req.method === 'OPTIONS') { res.writeHead(204, corsHeaders); res.end(); return; }
+    
+    // DEBUG ENDPOINT
+    if (req.url === '/debug-logs') {
+        res.writeHead(200, { ...corsHeaders, 'Content-Type': 'text/plain' });
+        res.end(lastLogs.join('\n'));
+        return;
+    }
+
+    // SYNC ENDPOINT
+    if (req.url === '/sync-opportunities') {
+        const results = await Promise.all([
+            fetchDevfolio(), fetchUnstop(), fetchHackerEarth(), fetchGovChallenges(),
+            fetchCommudle(), fetchTownscript()
+        ]);
+        const all = deduplicate(results.flat());
+        // Save to Supabase "global_opportunities"
+        let savedCount = 0;
+        if (supabase) {
+            try {
+                const upsertData = all.map(opp => ({
+                    id: opp.id,
+                    title: opp.title,
+                    company_or_organizer: opp.companyOrOrganizer,
+                    type: opp.type,
+                    location: opp.location,
+                    match_score: opp.matchScore,
+                    is_verified: opp.isVerified,
+                    apply_link: opp.applyLink,
+                    platform: opp.platform,
+                    analysis: opp.analysis,
+                    updated_at: new Date().toISOString()
+                }));
+                const { error, count } = await supabase
+                    .from('global_opportunities')
+                    .upsert(upsertData, { onConflict: 'id' });
+                
+                if (error) throw error;
+                savedCount = upsertData.length;
+                console.log(`[Supabase] Successfully upserted ${savedCount} opportunities.`);
+            } catch (err) {
+                console.error('[Supabase] Sync Error:', err.message);
+            }
+        }
+
+        res.writeHead(200, { ...corsHeaders, 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true, count: all.length, saved: savedCount, opportunities: all }));
+        return;
+    }
+
     if (req.method !== 'POST') { res.writeHead(404, corsHeaders); res.end(); return; }
 
     let body = '';
@@ -190,33 +369,59 @@ const server = http.createServer((req, res) => {
             const payload = JSON.parse(body || '{}');
             
             if (req.url.includes('/fetch-opportunities')) {
-                const results = await Promise.all([fetchActiveJobsDB(payload.query), fetchJSearch(payload.query), fetchCommudle(), fetchTownscript()]);
+                const results = await Promise.all([
+                    fetchActiveJobsDB(payload.query), 
+                    fetchJSearch(payload.query, 'internships'),
+                    fetchJSearch(payload.query, 'jobs'),
+                    fetchDevfolio(), fetchUnstop(), fetchHackerEarth(), fetchGovChallenges(),
+                    fetchCommudle(), fetchTownscript()
+                ]);
                 let all = deduplicate(results.flat());
-                if (!payload.query) all = all.filter(o => o.type==='EVENT' || isFresherRelevant(o.title, o.analysis));
+                
+                // NO MOCK FALLBACK - ONLY LIVE RESULTS
+                if (!payload.query) {
+                    all = all.filter(o => o.type === 'EVENT' || isFresherRelevant(o.title, o.analysis));
+                }
+                
                 all.sort((a,b) => (a.type==='EVENT' ? -1 : (b.type==='EVENT' ? 1 : b.matchScore-a.matchScore)));
                 res.writeHead(200, { ...corsHeaders, 'Content-Type': 'application/json' });
                 res.end(JSON.stringify({ success: true, opportunities: all }));
             }
             else if (req.url.includes('/ats-analyze')) {
-                const sys = "You are an ATS expert. Analyze and return ONLY JSON.";
-                const user = `Resume:\n${payload.resumeText}\nJD:\n${payload.jobDescription || 'N/A'}\nFormat: {overallScore, jobFitAnalysis, fitVerdict, sections:[], keywords:{found:[], missing:[]}, improvements:[], strengths:[]}`;
-                const ai = await callGemini(sys, user);
+                const systemPrompt = `You are an expert ATS Analyzer. 
+                Perform a deep analysis of the resume. 
+                If no Job Description (JD) is provided, give a 'General Industry Standard' score (0-100) and analyze against 'Software Engineer' benchmarks.
+                CRITICAL: The 'sections' array MUST contain: Experience, Education, Skills, and Projects with found: true/false.
+                Return ONLY JSON: {overallScore, jobFitAnalysis, fitVerdict, sections:[{name, found}], keywords:{found:[], missing:[]}, improvements:[], strengths:[]}.`;
+                const userMessage = `Resume: ${payload.resumeText}\nJD: ${payload.jobDescription || ''}`;
+                const aiResponse = await callGemini(systemPrompt, userMessage);
+                const analysis = JSON.parse(aiResponse.replace(/```json\n?|```/g, '').trim());
                 res.writeHead(200, { ...corsHeaders, 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ success: true, analysis: JSON.parse(ai.replace(/```json\n?|```/g, '').trim()) }));
+                res.end(JSON.stringify({ success: true, analysis }));
             }
             else if (req.url.includes('/analyze-resume')) {
-                const sys = "Extract profile. Return ONLY JSON: {skills:[], experienceLevel, domain, searchQuery}.";
+                const sys = "Extract profile. Return ONLY JSON: {skills:[], experienceLevel, domain, searchQuery}. CRITICAL: searchQuery MUST be very concise (max 2-3 words, e.g., 'Full Stack Developer' or 'Data Scientist') to ensure high-quality API results.";
                 const ai = await callGemini(sys, payload.resumeText);
                 const prof = JSON.parse(ai.replace(/```json\n?|```/g, '').trim());
-                const results = await Promise.all([fetchActiveJobsDB(prof.searchQuery), fetchJSearch(prof.searchQuery), fetchCommudle(), fetchTownscript()]);
+                
+                const results = await Promise.all([
+                    fetchActiveJobsDB(prof.searchQuery), 
+                    fetchJSearch(prof.searchQuery, 'internships'),
+                    fetchJSearch(prof.searchQuery, 'jobs'),
+                    fetchDevfolio(), fetchUnstop(), fetchHackerEarth(), fetchGovChallenges(),
+                    fetchCommudle(), fetchTownscript()
+                ]);
+                let all = deduplicate(results.flat());
+                // NO MOCK FALLBACK - ONLY LIVE RESULTS
+
                 res.writeHead(200, { ...corsHeaders, 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ success: true, ...prof, opportunities: deduplicate(results.flat()).slice(0, 8) }));
+                res.end(JSON.stringify({ success: true, ...prof, opportunities: all }));
             }
             else if (req.url.includes('/study-chat')) {
-                const sys = "You are 'Study Buddy'. Respond in English only.";
-                const ai = await callGemini(sys, payload.message, payload.conversationHistory);
+                const sys = "You are Study Buddy, a helpful academic assistant for Indian students. Be encouraging and concise.";
+                const aiResponse = await callGemini(sys, payload.message, payload.conversationHistory || []);
                 res.writeHead(200, { ...corsHeaders, 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ message: ai }));
+                res.end(JSON.stringify({ message: aiResponse }));
             }
             else { res.writeHead(404, corsHeaders); res.end(); }
         } catch (err) {

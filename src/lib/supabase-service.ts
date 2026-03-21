@@ -99,5 +99,15 @@ export const supabaseService = {
     
     if (error) throw error;
     return data;
+  },
+
+  async getGlobalOpportunities() {
+    const { data, error } = await (supabase.from('global_opportunities' as any) as any)
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(50);
+    
+    if (error) throw error;
+    return data;
   }
 };

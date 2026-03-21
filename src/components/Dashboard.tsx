@@ -23,12 +23,20 @@ export const Dashboard = ({ opportunities, onRefresh }: DashboardProps) => {
   const [activeFilter, setActiveFilter] = useState('all');
 
   const filteredOpportunities = useMemo(() => {
+    if (!opportunities || !Array.isArray(opportunities)) return [];
+    
     return opportunities.filter((opp) => {
-      const matchesSearch =
-        opp.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        opp.companyOrOrganizer.toLowerCase().includes(searchQuery.toLowerCase());
+      if (!opp) return false;
+      
+      const title = (opp.title || '').toString().toLowerCase();
+      const company = (opp.companyOrOrganizer || '').toString().toLowerCase();
+      const search = (searchQuery || '').toLowerCase();
+      
+      const matchesSearch = !search || title.includes(search) || company.includes(search);
 
-      const matchesFilter = activeFilter === 'all' || opp.type === activeFilter;
+      const oppType = (opp.type || '').toString().trim().toUpperCase();
+      const filter = (activeFilter || 'all').toString().trim().toUpperCase();
+      const matchesFilter = filter === 'ALL' || oppType === filter;
 
       return matchesSearch && matchesFilter;
     });
@@ -139,11 +147,15 @@ export const Dashboard = ({ opportunities, onRefresh }: DashboardProps) => {
         </div>
       ) : (
         <div className="text-center py-16">
-          <div className="w-16 h-16 mx-auto bg-muted rounded-full flex items-center justify-center mb-4">
-            <Search className="w-8 h-8 text-muted-foreground" />
+          <div className="w-32 h-32 mx-auto mb-6 opacity-80">
+            <img 
+              src="/assets/sketches/search-sketch.png" 
+              alt="Searching Illustration" 
+              className="w-full h-full object-contain mx-auto"
+            />
           </div>
-          <h3 className="text-lg font-semibold text-foreground mb-2">No matches found</h3>
-          <p className="text-muted-foreground">Try adjusting your search or filters.</p>
+          <h3 className="text-lg font-semibold text-foreground mb-2">Searching for live opportunities...</h3>
+          <p className="text-muted-foreground">We couldn't find any live matches on RapidAPI for this specific query. Try a more general search!</p>
         </div>
       )}
     </section>

@@ -192,9 +192,13 @@ export const UploadSection = ({ onFileSelect }: UploadSectionProps) => {
               </div>
             </div>
           ) : (
-            <div className="py-2">
-              <div className="w-16 h-16 mx-auto bg-primary/10 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-105 group-hover:bg-primary/20 transition-all duration-500">
-                <Upload className="w-8 h-8 text-primary" />
+            <div className="py-2 flex flex-col items-center">
+              <div className="w-32 h-32 mx-auto mb-4 group-hover:scale-105 transition-all duration-500">
+                <img 
+                  src="/assets/sketches/resume-sketch.png" 
+                  alt="Resume Sketch" 
+                  className="w-full h-full object-contain opacity-80 group-hover:opacity-100"
+                />
               </div>
               <p className="text-white font-black text-lg mb-1">
                 Drop Resume

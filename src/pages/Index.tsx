@@ -33,6 +33,40 @@ const Index = () => {
   const { toast } = useToast();
   const { user } = useAuth();
 
+  // Load global opportunities on mount
+  useEffect(() => {
+    const loadGlobalOpps = async () => {
+      try {
+        const { supabaseService } = await import('@/lib/supabase-service');
+        const data = await supabaseService.getGlobalOpportunities();
+        if (data && data.length > 0) {
+          const formatted = data.map((opp: any) => ({
+            id: opp.id,
+            title: opp.title,
+            companyOrOrganizer: opp.company_or_organizer,
+            type: opp.type as OpportunityType,
+            location: opp.location,
+            matchScore: opp.match_score || 0,
+            isVerified: opp.is_verified,
+            applyLink: opp.apply_link,
+            platform: opp.platform,
+            analysis: opp.analysis,
+            isFakeOfferLikely: false,
+            estReplyTime: "Not specified"
+          }));
+          setOpportunities(formatted);
+          setCurrentView('DASHBOARD');
+        }
+      } catch (err) {
+        console.error('Failed to load global opportunities:', err);
+      }
+    };
+
+    if (currentView === 'HERO') {
+      loadGlobalOpps();
+    }
+  }, []);
+
   const handleNavigate = (view: ViewState) => {
     setCurrentView(view);
   };

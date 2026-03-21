@@ -157,6 +157,15 @@ const Auth = () => {
             <span className="text-xl font-bold text-foreground">Career Compass</span>
           </div>
 
+          {/* Sketch Illustration */}
+          <div className="flex justify-center mb-6">
+            <img 
+              src="/assets/sketches/login-sketch.png" 
+              alt="Login Illustration" 
+              className="w-48 h-auto opacity-80 hover:opacity-100 transition-opacity duration-300"
+            />
+          </div>
+
           {/* Title */}
           <h1 className="text-2xl font-bold text-foreground text-center mb-2">
             {isLogin ? 'Welcome Back' : 'Create Account'}

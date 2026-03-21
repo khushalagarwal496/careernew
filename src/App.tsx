@@ -12,6 +12,7 @@ import NotFound from "./pages/NotFound";
 import Opportunities from "./pages/Opportunities";
 import ATSAnalyzerPage from "./pages/ATSAnalyzerPage";
 import ResumeBuilderPage from "./pages/ResumeBuilderPage";
+import Profile from "./pages/Profile";
 
 const queryClient = new QueryClient();
 
@@ -31,6 +32,7 @@ const App = () => (
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="/ats-analyzer" element={<ATSAnalyzerPage />} />
             <Route path="/resume-builder" element={<ResumeBuilderPage />} />
+            <Route path="/profile" element={<Profile />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

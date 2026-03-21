@@ -41,7 +41,7 @@ export async function callGemini(systemPrompt, userMessage, history = []) {
         }
     };
 
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${GEMINI_API_KEY}`;
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${GEMINI_API_KEY}`;
     
     const response = await fetch(apiUrl, {
         method: 'POST',
@@ -94,4 +94,24 @@ export function deduplicate(list) {
         seen.add(item.applyLink); 
         return true; 
     });
+}
+
+export function getMockOpportunities(query = '') {
+    const mocks = [
+        { id: 'mock-1', title: 'React Developer Intern', companyOrOrganizer: 'TechGrowth India', type: 'INTERNSHIP', location: 'Remote', applyLink: 'https://internshala.com', analysis: 'Perfect for beginners with React & JS skills.', matchScore: 92, platform: 'Featured' },
+        { id: 'mock-2', title: 'Associate Software Engineer', companyOrOrganizer: 'Future Systems', type: 'JOB', location: 'Bangalore / Hybrid', applyLink: 'https://naukri.com', analysis: 'Great entry-level role for CS graduates.', matchScore: 88, platform: 'Featured' },
+        { id: 'mock-3', title: 'Python Backend Trainee', companyOrOrganizer: 'DataFlow Inc', type: 'INTERNSHIP', location: 'Pune', applyLink: 'https://linkedin.com', analysis: 'Hands-on experience with Django/Flask.', matchScore: 85, platform: 'Featured' },
+        { id: 'mock-4', title: 'Frontend Developer (Fresher)', companyOrOrganizer: 'Pixel Perfect', type: 'JOB', location: 'Remote', applyLink: 'https://wellfound.com', analysis: 'Join a fast-growing startup team.', matchScore: 82, platform: 'Featured' },
+        { id: 'mock-5', title: 'Java Developer Internship', companyOrOrganizer: 'Enterprise Solutions', type: 'INTERNSHIP', location: 'Hyderabad', applyLink: 'https://glassdoor.com', analysis: 'Focus on Spring Boot and Microservices.', matchScore: 78, platform: 'Featured' }
+    ];
+    
+    if (!query) return mocks;
+    
+    // Simple filter for mock query
+    const results = mocks.filter(m => 
+        m.title.toLowerCase().includes(query.toLowerCase()) || 
+        m.analysis.toLowerCase().includes(query.toLowerCase())
+    );
+    
+    return results.length > 0 ? results : mocks.slice(0, 3);
 }

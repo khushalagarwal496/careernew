@@ -149,9 +149,20 @@ export default async function handler(req, res) {
 
         let all = deduplicate(results.flat());
         
-        // If no query, only show events or fresher-relevant items (same as local proxy)
+        // If live APIs failed or returned nothing, use high-quality mock fallback
+        if (all.length === 0) {
+            const { getMockOpportunities } = await import('./utils.js');
+            all = getMockOpportunities(query);
+        }
+        
+        // If no query, prioritize events or fresher items
         if (!query) {
             all = all.filter(o => o.type === 'EVENT' || isFresherRelevant(o.title, o.analysis));
+            // Ensure at least 3 items show up even after filter
+            if (all.length < 3) {
+                const { getMockOpportunities } = await import('./utils.js');
+                all = [...all, ...getMockOpportunities().slice(0, 3)].slice(0, 6);
+            }
         }
 
         all.sort((a, b) => {

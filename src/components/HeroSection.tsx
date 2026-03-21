@@ -73,9 +73,17 @@ export const HeroSection = ({
 
             {/* Floating Cards */}
             <div className="relative z-10 w-full h-full flex items-center justify-center">
+              {/* Main Sketch Illustration (Compass) */}
+              <div className="relative z-10 w-full flex items-center justify-center animate-float">
+                <img 
+                  src="/assets/sketches/compass-sketch.png" 
+                  alt="Career Compass Illustration" 
+                  className="w-full max-w-sm h-auto drop-shadow-2xl opacity-90 hover:opacity-100 transition-opacity"
+                />
+              </div>
 
               {/* Main Card - Software Engineer */}
-              <div className="bg-white/90 backdrop-blur-md p-6 rounded-2xl shadow-[0_20px_40px_-15px_rgba(0,0,0,0.1)] border border-white/50 animate-float w-full max-w-md absolute z-10">
+              <div className="bg-white/90 backdrop-blur-md p-6 rounded-2xl shadow-[0_20px_40px_-15px_rgba(0,0,0,0.1)] border border-white/50 animate-float w-full max-w-md absolute -bottom-10 -left-10 z-20">
                 <div className="flex items-center gap-4 mb-4">
                   <div className="w-12 h-12 bg-orange-50 rounded-xl flex items-center justify-center">
                     <Briefcase className="w-6 h-6 text-primary" />
@@ -174,6 +182,13 @@ export const HeroSection = ({
             <h2 className="text-2xl md:text-3xl font-black tracking-tighter">
               From Resume to Opportunity <span className="text-primary">in 4 Steps</span>
             </h2>
+            <div className="flex justify-center mt-6">
+              <img 
+                src="/assets/sketches/meeting-sketch.png" 
+                alt="Community Meeting" 
+                className="w-64 h-auto opacity-70"
+              />
+            </div>
           </div>
 
           <div className="grid md:grid-cols-4 gap-8 relative max-w-5xl mx-auto">

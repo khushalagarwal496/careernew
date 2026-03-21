@@ -55,15 +55,6 @@ export const Navbar = ({ onNavigate, onOpenModal }: NavbarProps) => {
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="center" className="w-56 mt-4 rounded-xl p-2 border-slate-100 shadow-2xl animate-scale-in">
-            <DropdownMenuItem onClick={() => navigate('/opportunities')} className="cursor-pointer py-2 rounded-lg hover:bg-slate-50 transition-colors">
-              <div className="w-8 h-8 rounded-lg bg-orange-50 flex items-center justify-center mr-3 text-primary">
-                <Briefcase className="w-4 h-4" />
-              </div>
-              <div className="flex flex-col">
-                <span className="font-bold text-sm text-foreground">Find Jobs</span>
-                <span className="text-xs text-muted-foreground">Browse opportunities</span>
-              </div>
-            </DropdownMenuItem>
 
             <DropdownMenuItem onClick={() => navigate('/resume-builder')} className="cursor-pointer py-2 rounded-lg hover:bg-slate-50 transition-colors">
               <div className="w-8 h-8 rounded-lg bg-orange-50 flex items-center justify-center mr-3 text-primary">
@@ -113,6 +104,10 @@ export const Navbar = ({ onNavigate, onOpenModal }: NavbarProps) => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48 rounded-2xl p-2 mt-2">
+              <DropdownMenuItem onClick={() => navigate('/profile')} className="rounded-xl py-2">
+                <User className="w-4 h-4 mr-2 text-primary" />
+                My Profile
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => onOpenModal(ModalType.HISTORY)} className="rounded-xl py-2">
                 <History className="w-4 h-4 mr-2 text-primary" />
                 My Analyses
@@ -166,13 +161,6 @@ export const Navbar = ({ onNavigate, onOpenModal }: NavbarProps) => {
               Home
             </button>
             <button
-              onClick={() => { navigate('/opportunities'); setIsMobileMenuOpen(false); }}
-              className="text-foreground/70 font-medium hover:text-primary transition-colors py-2 text-left flex items-center gap-2"
-            >
-              <Briefcase className="w-4 h-4" />
-              Find Jobs
-            </button>
-            <button
               onClick={() => { navigate('/resume-builder'); setIsMobileMenuOpen(false); }}
               className="text-foreground/70 font-medium hover:text-primary transition-colors py-2 text-left flex items-center gap-2"
             >
@@ -202,6 +190,13 @@ export const Navbar = ({ onNavigate, onOpenModal }: NavbarProps) => {
 
             {user ? (
               <>
+                <button
+                  onClick={() => { navigate('/profile'); setIsMobileMenuOpen(false); }}
+                  className="text-foreground/70 font-medium hover:text-primary transition-colors py-2 text-left flex items-center gap-2"
+                >
+                  <User className="w-4 h-4" />
+                  My Profile
+                </button>
                 <button
                   onClick={() => { onOpenModal(ModalType.HISTORY); setIsMobileMenuOpen(false); }}
                   className="text-foreground/70 font-medium hover:text-primary transition-colors py-2 text-left flex items-center gap-2"

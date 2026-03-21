@@ -1,0 +1,9 @@
+
+Khushal Agarwal
+Software Engineer Intern
+Skills: React, Node.js, JavaScript, TypeScript, Python, TailwindCSS
+Experience:
+- Frontend Intern at TechCorp (3 months)
+- Developed a project using React and Supabase
+Education: B.Tech in Computer Science
+Looking for Software Engineering Internships and Junior Developer roles in India.
