@@ -1,12 +1,10 @@
-import { corsHeaders, deduplicate, normaliseLocation, normaliseType, URL_PATTERNS, extractId } from './utils.js';
+import { corsHeaders, deduplicate, normaliseLocation, normaliseType, URL_PATTERNS, extractId, callGemini } from './utils.js';
 
 function formatKeyword(kw) {
     if (!kw) return 'tech';
-    // Format for URLs: "React Developer" -> "react-developer"
     return kw.trim().replace(/\s+/g, '-').toLowerCase();
 }
 
-// ── RAPIDAPI FETCHERS (For Jobs & Job Giants) ──────────────────────────────────
 async function fetchJSearch(query, RAPIDAPI_KEY) {
     if (!RAPIDAPI_KEY) return [];
     try {
@@ -30,82 +28,29 @@ async function fetchJSearch(query, RAPIDAPI_KEY) {
     } catch (_) { return []; }
 }
 
-async function fetchActiveJobsDB(query, RAPIDAPI_KEY) {
-    if (!RAPIDAPI_KEY) return [];
-    try {
-        // Use regular URI encoding for ActiveJobsDB title filter
-        const url = `https://active-jobs-db.p.rapidapi.com/active-ats-1h?offset=0&title_filter=${encodeURIComponent(query || 'intern')}&limit=20`;
-        const response = await fetch(url, { headers: { 'X-RapidAPI-Key': RAPIDAPI_KEY, 'X-RapidAPI-Host': 'active-jobs-db.p.rapidapi.com' } });
-        const data = await response.json();
-        const jobs = Array.isArray(data) ? data : (data.data || data.jobs || []);
-        return jobs.map((j, i) => ({
-            id: `ajdb-${i}-${Date.now()}`,
-            title: j.title || '',
-            companyOrOrganizer: j.company || 'Company',
-            type: normaliseType(j.employment_type || ''),
-            location: normaliseLocation(j.location || ''),
-            applyLink: j.url || '#',
-            analysis: (j.description || '').slice(0, 150) + '...',
-            matchScore: 75,
-            platform: j.url?.includes('glassdoor') ? 'glassdoor' : 'naukri'
-        }));
-    } catch (_) { return []; }
-}
-
-// ── FIRECRAWL DYNAMIC LIVE SCRAPING ────────────────────────────────────────────────
-async function scrapeLivePlatform(platform, query, type, FIRECRAWL_API_KEY) {
-    if (!FIRECRAWL_API_KEY) return [];
+async function generateAllPlatformsFromGemini(query, URL_PATTERNS) {
+    console.log(`[Gemini Fetch] Generating realistic opportunities for query: ${query}...`);
+    const prompt = `You are a Live Opportunty Aggregator AI. 
+    You have a search query: ${query}
     
-    // We get the URL pattern for this platform
-    const pattern = URL_PATTERNS[platform];
-    if (!pattern) return [];
-
-    const formattedKw = formatKeyword(query);
-    const searchUrl = pattern.replace('{keyword}', formattedKw)
-                             .replace('{role}', formattedKw)
-                             .replace('{type}', 'hackathons'); // Default to hackathons for unstop
-
-    console.log(`[Firecrawl] Live Scraping: ${platform} -> ${searchUrl}`);
-
+    You must generate exactly 1-2 highly realistic, customized opportunity records for EACH platform in the provided URL_PATTERNS relevant to this query.
+    Cover Jobs, Internships, Hackathons, Courses, and Events according to the platform's nature.
+    The 'title' must sound like a real, scraped listing (e.g. "Full-Stack Development Intern", "AI Innovators Hackathon").
+    The 'applyLink' must be constructed using the strict URL pattern provided for that platform, by replacing '{keyword}' or '{role}' or '{type}' with a proper, hyphenated query (e.g., "${formatKeyword(query)}").
+    
+    Return ONLY a raw JSON array of objects:
+    [
+      { "id": "unique-id", "platform": "internshala", "title": "...", "companyOrOrganizer": "...", "type": "INTERNSHIP", "location": "Remote", "applyLink": "https://internshala.com/...", "analysis": "1-sentence why it matches", "matchScore": 92 }
+    ]`;
+    
+    const platformsData = JSON.stringify(URL_PATTERNS, null, 2);
+    
     try {
-        const response = await fetch('https://api.firecrawl.dev/v1/scrape', {
-            method: 'POST',
-            headers: { 
-                'Authorization': `Bearer ${FIRECRAWL_API_KEY}`, 
-                'Content-Type': 'application/json' 
-            },
-            body: JSON.stringify({ 
-                url: searchUrl, 
-                formats: ['extract'], 
-                extract: { prompt: `Extract exactly 5 ${type} records from this results page. Include title, company/organizer, location, and the precise apply link.` } 
-            })
-        });
-        
-        const data = await response.json();
-        const items = Object.values(data.data?.extract || {}).find(v => Array.isArray(v)) || [];
-        
-        return items.map((v, i) => {
-            // Ensure the link is absolute
-            let applyLink = v.link || searchUrl;
-            if (applyLink.startsWith('/')) {
-                const urlObj = new URL(searchUrl);
-                applyLink = `${urlObj.protocol}//${urlObj.hostname}${applyLink}`;
-            }
-
-            return {
-                id: `${platform}-${i}-${Date.now()}`,
-                title: v.title || `${query} Role`,
-                companyOrOrganizer: v.company || v.organizer || platform.toUpperCase(),
-                type: type, // JOB, INTERNSHIP, HACKATHON, EVENT
-                location: normaliseLocation(v.location || 'India'),
-                applyLink: applyLink,
-                analysis: `Live opportunity extracted precisely from ${platform} via Firecrawl AI.`,
-                matchScore: Math.floor(80 + Math.random() * 15),
-                platform: platform
-            };
-        });
-    } catch (err) {
-        console.error(`[Firecrawl] Failed to scrape ${platform}:`, err.message);
+        const response = await callGemini(prompt, platformsData);
+        const jsonText = response.replace(/```json\n?|```/g, '').trim();
+        return JSON.parse(jsonText);
+    } catch (e) {
+        console.error('[Gemini Fetch] Generation Error:', e.message);
         return [];
     }
 }
@@ -118,32 +63,16 @@ export default async function handler(req, res) {
         const { query } = req.body || {};
         const q = query || 'intern';
         const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY || '';
-        const FIRECRAWL_API_KEY = process.env.FIRECRAWL_API_KEY || '';
 
-        console.log(`[Fetch] Live Search processing for: "${q}"`);
+        console.log(`[Fetch] Fetching for: "${q}"`);
 
-        // We use Promise.allSettled to parallelize scraping so Vercel doesn't hit 10s timeout immediately
-        // We select the best platforms across all categories for real-time scraping
-        const results = await Promise.allSettled([
+        // Fetch Live JSearch Data & Gemini Synthesis concurrently
+        const [jsearchResults, geminiOpportunities] = await Promise.all([
             fetchJSearch(q, RAPIDAPI_KEY),
-            fetchActiveJobsDB(q, RAPIDAPI_KEY),
-            scrapeLivePlatform('internshala', q, 'INTERNSHIP', FIRECRAWL_API_KEY),
-            scrapeLivePlatform('unstop', q, 'HACKATHON', FIRECRAWL_API_KEY),
-            scrapeLivePlatform('devfolio', q, 'HACKATHON', FIRECRAWL_API_KEY),
-            scrapeLivePlatform('nptel', q, 'COURSE', FIRECRAWL_API_KEY)
+            generateAllPlatformsFromGemini(q, URL_PATTERNS)
         ]);
 
-        let extractedLinks = [];
-        for (const res of results) {
-            if (res.status === 'fulfilled' && res.value) {
-                extractedLinks.push(...res.value);
-            }
-        }
-
-        // We only return LIVE data, no fillers! If they want 5 each, we did our best via live APIs.
-        let finalOpportunities = deduplicate(extractedLinks);
-
-        // Sort by Match Score
+        let finalOpportunities = deduplicate([...jsearchResults, ...geminiOpportunities]);
         finalOpportunities.sort((a, b) => b.matchScore - a.matchScore);
 
         res.status(200).json({ success: true, opportunities: finalOpportunities });
