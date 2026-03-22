@@ -138,6 +138,29 @@ export default async function handler(req, res) {
         }
 
         let finalOpportunities = deduplicate(extractedLinks);
+        
+        if (finalOpportunities.length > 0) {
+            console.log(`[Gemini] Batch scoring ${finalOpportunities.length} opportunities...`);
+            const scoringPrompt = `You are an expert career counselor. Given a user's skills and a list of jobs, assign a personalized matchScore (0-100) and a short 1-sentence analysis explaining why it fits. Return ONLY a JSON array: [{"id": "...", "matchScore": 90, "analysis": "..."}]`;
+            const evalContent = `User Skills: ${prof.skills.join(', ')}\nExperience: ${prof.experienceLevel}\n\nOpportunities:\n` + finalOpportunities.map(o => `ID: ${o.id} | Title: ${o.title} | Company: ${o.companyOrOrganizer}`).join('\n');
+            
+            try {
+                const scoreResponse = await callGemini(scoringPrompt, evalContent);
+                const scoreJson = JSON.parse(scoreResponse.replace(/```json\n?|```/g, '').trim());
+                
+                const scoreMap = new Map(scoreJson.map(s => [s.id, s]));
+                finalOpportunities = finalOpportunities.map(opp => {
+                    const scored = scoreMap.get(opp.id);
+                    if (scored) {
+                        return { ...opp, matchScore: scored.matchScore || opp.matchScore, analysis: scored.analysis || opp.analysis };
+                    }
+                    return opp;
+                });
+            } catch (e) {
+                console.error("[Gemini Scoring Error] Falling back to default scores.", e.message);
+            }
+        }
+
         finalOpportunities.sort((a, b) => b.matchScore - a.matchScore);
 
         res.status(200).json({ 
