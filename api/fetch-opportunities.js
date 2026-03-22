@@ -83,9 +83,8 @@ export default async function handler(req, res) {
 
             // Build perfectly strict link. Replace strict keyword. Link will never break!
             const applyLink = pattern
-                .replace('{keyword}', encodeURIComponent(formattedKw))
-                .replace('{role}', encodeURIComponent(formattedKw))
-                .replace('{type}', 'hackathons');
+                .replace('{queryKeyword}', encodeURIComponent(q))
+                .replace('{pathKeyword}', encodeURIComponent(formattedKw));
 
             dynamicOpps.push({
                 id: `${platform}-${i}`,

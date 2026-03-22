@@ -88,11 +88,10 @@ export default async function handler(req, res) {
             if (catType === 'HACKATHON' && !title.toLowerCase().includes('hack')) title = `${title} Challenge`;
             if (catType === 'COURSE' && !title.toLowerCase().includes('course')) title = `Mastering ${title}`;
 
-            // Build perfectly strict link
+            // Build perfectly strict link. Replace strict keyword. Link will never break!
             const applyLink = pattern
-                .replace('{keyword}', encodeURIComponent(formattedKw))
-                .replace('{role}', encodeURIComponent(formattedKw))
-                .replace('{type}', 'hackathons');
+                .replace('{queryKeyword}', encodeURIComponent(q))
+                .replace('{pathKeyword}', encodeURIComponent(formattedKw));
 
             dynamicOpps.push({
                 id: `${platform}-${i}`,
