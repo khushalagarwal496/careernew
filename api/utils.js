@@ -129,7 +129,7 @@ export async function callGemini(systemPrompt, userMessage, history = []) {
         contents: contents,
         generationConfig: { 
             temperature: 0.7, 
-            maxOutputTokens: 2048,
+            maxOutputTokens: 8192,
         }
     };
 

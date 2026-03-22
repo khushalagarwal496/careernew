@@ -35,8 +35,9 @@ async function generateAllPlatformsFromGemini(prof, URL_PATTERNS) {
     Skills: ${prof.skills.join(', ')}
     Experience: ${prof.experienceLevel}
     
-    You must generate exactly 2 highly realistic, customized opportunity records for EACH platform in the provided URL_PATTERNS.
-    Cover Jobs, Internships, Hackathons, Courses, and Events according to the platform's nature.
+    You must generate EXACTLY 1 highly realistic, customized opportunity record for EACH platform in the provided URL_PATTERNS.
+    This means you will return exactly 32 objects in the JSON array.
+    Cover Jobs, Internships, Hackathons, Courses, and Events depending exactly on the platform's nature. Ensure 'type' is one of: JOB, INTERNSHIP, HACKATHON, EVENT, COURSE.
     The 'title' must sound like a real, scraped job/event (e.g., "Full-Stack Development Intern", "AI Innovators Hackathon", "Mastering React JS Certification").
     The 'applyLink' must be constructed using the strict URL pattern provided for that platform, by replacing '{keyword}' or '{role}' or '{type}' with a proper, hyphenated query (e.g., "react-developer").
     
